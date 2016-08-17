@@ -68,6 +68,40 @@ package_revision=@package_revision@
 scriptversion='(GNU @PACKAGE@) @VERSION@'
 
 
+# func_pathsep_append VAR VALUE
+# ----------------------------
+# Append VALUE onto existing contents of VAR, prepending
+# the path separator to VALUE if VAR is not empty.
+# (note: uses _G_HAVE_PLUSEQ_OP from included funclib.sh)
+if test yes = "$_G_HAVE_PLUSEQ_OP"
+then
+  # This is an XSI compatible shell, allowing a faster implementation...
+  eval 'func_pathsep_append ()
+  {
+    $debug_cmd
+
+    eval "_G_tmp_val=\$$1"
+    if [ -z "$_G_tmp_val" ]; then
+      eval "$1=\$2"
+    else
+      eval "$1+=${PATH_SEPARATOR-:}\$2"
+    fi
+  }'
+else
+  # ...otherwise fall back to using expr, which is often a shell builtin.
+  func_pathsep_append ()
+  {
+    $debug_cmd
+
+    eval "_G_tmp_val=\$$1"
+    if [ -z "$_G_tmp_val" ]; then
+      eval "$1=\$2"
+    else
+      eval "$1=\$$1${PATH_SEPARATOR-:}\$2"
+    fi
+  }
+fi
+
 # func_echo ARG...
 # ----------------
 # Libtool also displays the current mode in messages, so override
@@ -2079,11 +2113,11 @@ func_mode_finish ()
     for opt in "$nonopt" ${1+"$@"}
     do
       if test -d "$opt"; then
-	func_append libdirs " $opt"
+	func_pathsep_append libdirs "$opt"
 
       elif test -f "$opt"; then
 	if func_lalib_unsafe_p "$opt"; then
-	  func_append libs " $opt"
+	  func_pathsep_append libs "$opt"
 	else
 	  func_warning "'$opt' is not a valid libtool archive"
 	fi
@@ -2103,25 +2137,33 @@ func_mode_finish ()
 
       # Remove sysroot references
       if $opt_dry_run; then
+	_G_IFS=$IFS; IFS=${PATH_SEPARATOR-:}
         for lib in $libs; do
           echo "removing references to $lt_sysroot and '=' prefixes from $lib"
         done
+	IFS=$_G_IFS
       else
         tmpdir=`func_mktempdir`
+	_G_IFS=$IFS; IFS=${PATH_SEPARATOR-:}
         for lib in $libs; do
-	  $SED -e "$sysroot_cmd s/\([ ']-[LR]\)=/\1/g; s/\([ ']\)=/\1/g" $lib \
+	  IFS=$_G_IFS
+	  $SED -e "$sysroot_cmd s/\([ ']-[LR]\)=/\1/g; s/\([ ']\)=/\1/g" "$lib" \
 	    > $tmpdir/tmp-la
-	  mv -f $tmpdir/tmp-la $lib
+	  mv -f $tmpdir/tmp-la "$lib"
 	done
+	IFS=$_G_IFS
         ${RM}r "$tmpdir"
       fi
     fi
 
     if test -n "$finish_cmds$finish_eval" && test -n "$libdirs"; then
+      _G_IFS=$IFS; IFS=${PATH_SEPARATOR-:}
       for libdir in $libdirs; do
+	IFS=$_G_IFS
 	if test -n "$finish_cmds"; then
 	  # Do each command in the finish commands.
-	  func_execute_cmds "$finish_cmds" 'admincmds="$admincmds
+	  func_quote_arg pretty,unquoted "$finish_cmds"
+	  func_execute_cmds "$func_quote_arg_unquoted_result" 'admincmds="$admincmds
 '"$cmd"'"'
 	fi
 	if test -n "$finish_eval"; then
@@ -2131,6 +2173,7 @@ func_mode_finish ()
        $cmds"
 	fi
       done
+      IFS=$_G_IFS
     fi
 
     # Exit here if they wanted silent mode.
@@ -2139,9 +2182,12 @@ func_mode_finish ()
     if test -n "$finish_cmds$finish_eval" && test -n "$libdirs"; then
       echo "----------------------------------------------------------------------"
       echo "Libraries have been installed in:"
+      _G_IFS=$IFS; IFS=${PATH_SEPARATOR-:}
       for libdir in $libdirs; do
+	IFS=$_G_IFS
 	$ECHO "   $libdir"
       done
+      IFS=$_G_IFS
       echo
       echo "If you ever happen to want to link against installed libraries"
       echo "in a given directory, LIBDIR, you must either use libtool, and"
@@ -2361,15 +2407,17 @@ func_mode_install ()
 
 	# Add the libdir to current_libdirs if it is the destination.
 	if test "X$destdir" = "X$libdir"; then
+	  func_quote_arg pretty,unquoted "$libdir"
+	  q_libdir=$func_quote_arg_unquoted_result
 	  case "$current_libdirs " in
-	  *" $libdir "*) ;;
-	  *) func_append current_libdirs " $libdir" ;;
+	  *" \"$q_libdir\" "*) ;;
+	  *) func_append current_libdirs " \"$q_libdir\"" ;;
 	  esac
 	else
 	  # Note the libdir as a future libdir.
 	  case "$future_libdirs " in
-	  *" $libdir "*) ;;
-	  *) func_append future_libdirs " $libdir" ;;
+	  *" \"$libdir\" "*) ;;
+	  *) func_append future_libdirs " \"$libdir\"" ;;
 	  esac
 	fi
 
@@ -2412,7 +2460,7 @@ func_mode_install ()
 	  test -n "$relink_command" && srcname=${realname}T
 
 	  # Install the shared library and build the symlinks.
-	  func_show_eval "$install_shared_prog $dir/$srcname $destdir/$realname" \
+	  func_show_eval '$install_shared_prog $dir/$srcname "$destdir/$realname"' \
 	      'exit $?'
 	  tstripme=$stripme
 	  case $host_os in
@@ -2432,7 +2480,7 @@ func_mode_install ()
 	    ;;
 	  esac
 	  if test -n "$tstripme" && test -n "$striplib"; then
-	    func_show_eval "$striplib $destdir/$realname" 'exit $?'
+	    func_show_eval '$striplib "$destdir/$realname"' 'exit $?'
 	  fi
 
 	  if test "$#" -gt 0; then
@@ -2443,20 +2491,21 @@ func_mode_install ()
 	    for linkname
 	    do
 	      test "$linkname" != "$realname" \
-		&& func_show_eval "(cd $destdir && { $LN_S -f $realname $linkname || { $RM $linkname && $LN_S $realname $linkname; }; })"
+		&& func_show_eval '(cd "$destdir" && { $LN_S -f $realname $linkname || { $RM $linkname && $LN_S $realname $linkname; }; })'
 	    done
 	  fi
 
 	  # Do each command in the postinstall commands.
 	  lib=$destdir/$realname
-	  func_execute_cmds "$postinstall_cmds" 'exit $?'
+	  func_quote_arg pretty,unquoted "$postinstall_cmds"
+	  func_execute_cmds "$func_quote_arg_unquoted_result" 'exit $?'
 	fi
 
 	# Install the pseudo-library for information purposes.
 	func_basename "$file"
 	name=$func_basename_result
 	instname=$dir/${name}i
-	func_show_eval "$install_prog $instname $destdir/$name" 'exit $?'
+	func_show_eval '$install_prog $instname "$destdir/$name"' 'exit $?'
 
 	# Maybe install the static library, too.
 	test -n "$old_library" && func_append staticlibs " $dir/$old_library"
@@ -2491,14 +2540,14 @@ func_mode_install ()
 
 	# Install the libtool object if requested.
 	test -n "$destfile" && \
-	  func_show_eval "$install_prog $file $destfile" 'exit $?'
+	  func_show_eval "$install_prog $file \"$destfile\"" 'exit $?'
 
 	# Install the old object if enabled.
 	if test yes = "$build_old_libs"; then
 	  # Deduce the name of the old-style object file.
 	  func_lo2o "$file"
 	  staticobj=$func_lo2o_result
-	  func_show_eval "$install_prog \$staticobj \$staticdest" 'exit $?'
+	  func_show_eval "$install_prog \$staticobj \"\$staticdest\"" 'exit $?'
 	fi
 	exit $EXIT_SUCCESS
 	;;
@@ -2619,7 +2668,7 @@ func_mode_install ()
 	  esac
 	  ;;
 	esac
-	func_show_eval "$install_prog\$stripme \$file \$destfile" 'exit $?'
+	func_show_eval "$install_prog\$stripme \$file \"\$destfile\"" 'exit $?'
 	$opt_dry_run || if test -n "$outputname"; then
 	  ${RM}r "$tmpdir"
 	fi
@@ -2636,14 +2685,15 @@ func_mode_install ()
       func_to_tool_file "$oldlib" func_convert_file_msys_to_w32
       tool_oldlib=$func_to_tool_file_result
 
-      func_show_eval "$install_prog \$file \$oldlib" 'exit $?'
+      func_show_eval '$install_prog $file "$oldlib"' 'exit $?'
 
       if test -n "$stripme" && test -n "$old_striplib"; then
-	func_show_eval "$old_striplib $tool_oldlib" 'exit $?'
+	func_show_eval "$old_striplib \"\$tool_oldlib\"" 'exit $?'
       fi
 
-      # Do each command in the postinstall commands.
-      func_execute_cmds "$old_postinstall_cmds" 'exit $?'
+      # Do each command in the old_postinstall commands.
+      func_quote_arg pretty,unquoted "$old_postinstall_cmds"
+      func_execute_cmds "$func_quote_arg_unquoted_result" 'exit $?'
     done
 
     test -n "$future_libdirs" && \
@@ -2652,7 +2702,7 @@ func_mode_install ()
     if test -n "$current_libdirs"; then
       # Maybe just do a dry run.
       $opt_dry_run && current_libdirs=" -n$current_libdirs"
-      exec_cmd='$SHELL "$progpath" $preserve_args --finish$current_libdirs'
+      exec_cmd='$SHELL "$progpath" $preserve_args --finish'$current_libdirs
     else
       exit $EXIT_SUCCESS
     fi
@@ -3281,7 +3331,7 @@ func_extract_archives ()
 	    $RM -rf unfat-$$
 	    cd "$darwin_orig_dir"
 	  else
-	    cd $darwin_orig_dir
+	    cd "$darwin_orig_dir"
 	    func_extract_an_archive "$my_xdir" "$my_xabs"
 	  fi # $darwin_arches
 	} # !$opt_dry_run
@@ -4657,6 +4707,7 @@ func_mode_link ()
     prevarg=
     release=
     rpath=
+    rpath_extra=
     xrpath=
     perm_rpath=
     temp_rpath=
@@ -4930,9 +4981,10 @@ func_mode_link ()
 	    ;;
 	  esac
 	  if test rpath = "$prev"; then
-	    case "$rpath " in
-	    *" $arg "*) ;;
-	    *) func_append rpath " $arg" ;;
+	    case :"$rpath": in
+	    :"$arg":) ;;
+	    ::) rpath="$arg" ;;
+	    *) rpath_extra=1 ;;
 	    esac
 	  else
 	    case "$xrpath " in
@@ -6860,12 +6912,10 @@ func_mode_link ()
       test no = "$dlself" \
 	|| func_warning "'-dlopen self' is ignored for libtool libraries"
 
-      set dummy $rpath
-      shift
-      test 1 -lt "$#" \
+      test -n "$rpath_extra" \
 	&& func_warning "ignoring multiple '-rpath's for a libtool library"
 
-      install_libdir=$1
+      install_libdir=$rpath
 
       oldlibs=
       if test -z "$rpath"; then
@@ -9126,12 +9176,14 @@ func_mode_uninstall ()
 	  uninstall)
 	    if test -n "$library_names"; then
 	      # Do each command in the postuninstall commands.
-	      func_execute_cmds "$postuninstall_cmds" '$rmforce || exit_status=1'
+	      func_quote_arg pretty,unquoted "$postuninstall_cmds"
+	      func_execute_cmds "$func_quote_arg_unquoted_result" '$rmforce || exit_status=1'
 	    fi
 
 	    if test -n "$old_library"; then
 	      # Do each command in the old_postuninstall commands.
-	      func_execute_cmds "$old_postuninstall_cmds" '$rmforce || exit_status=1'
+	      func_quote_arg pretty,unquoted "$old_postuninstall_cmds"
+	      func_execute_cmds "$func_quote_arg_unquoted_result" '$rmforce || exit_status=1'
 	    fi
 	    # FIXME: should reinstall the best remaining shared library.
 	    ;;

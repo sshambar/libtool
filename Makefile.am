@@ -259,7 +259,7 @@ abs_aux_dir = `$(lt__cd) '$(srcdir)/$(aux_dir)' && pwd`
 ltdl_ac_aux_dir = `$(SCRIPT_ENV) $(extract_trace) AC_CONFIG_AUX_DIR $(srcdir)/libltdl/configure.ac`
 
 configure_edit = $(bootstrap_edit) \
-	-e '/^\. /s|@auxscriptsdir\@|'$(abs_aux_dir)'|g' \
+	-e '/^\. /s|@auxscriptsdir\@|'"$(abs_aux_dir)"'|g' \
 	-e 's|@aclocaldir\@|$(aclocaldir)|g' \
 	-e 's|@aux_dir\@|$(aux_dir)|g' \
 	-e 's|@datadir\@|$(datadir)|g' \

@@ -1124,14 +1124,14 @@ m4_defun([_LT_DARWIN_LINKER_FEATURES],
   esac
   if test yes = "$_lt_dar_can_shared"; then
     output_verbose_link_cmd=func_echo_all
-    _LT_TAGVAR(archive_cmds, $1)="\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring $_lt_dar_single_mod$_lt_dsymutil"
+    _LT_TAGVAR(archive_cmds, $1)="\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \"\$rpath/\$soname\" \$verstring $_lt_dar_single_mod$_lt_dsymutil"
     _LT_TAGVAR(module_cmds, $1)="\$CC \$allow_undefined_flag -o \$lib -bundle \$libobjs \$deplibs \$compiler_flags$_lt_dsymutil"
-    _LT_TAGVAR(archive_expsym_cmds, $1)="sed 's|^|_|' < \$export_symbols > \$output_objdir/\$libname-symbols.expsym~\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring $_lt_dar_single_mod$_lt_dar_export_syms$_lt_dsymutil"
+    _LT_TAGVAR(archive_expsym_cmds, $1)="sed 's|^|_|' < \$export_symbols > \$output_objdir/\$libname-symbols.expsym~\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \"\$rpath/\$soname\" \$verstring $_lt_dar_single_mod$_lt_dar_export_syms$_lt_dsymutil"
     _LT_TAGVAR(module_expsym_cmds, $1)="sed -e 's|^|_|' < \$export_symbols > \$output_objdir/\$libname-symbols.expsym~\$CC \$allow_undefined_flag -o \$lib -bundle \$libobjs \$deplibs \$compiler_flags$_lt_dar_export_syms$_lt_dsymutil"
     m4_if([$1], [CXX],
 [   if test yes != "$lt_cv_apple_cc_single_mod"; then
-      _LT_TAGVAR(archive_cmds, $1)="\$CC -r -keep_private_externs -nostdlib -o \$lib-master.o \$libobjs~\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$lib-master.o \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring$_lt_dsymutil"
-      _LT_TAGVAR(archive_expsym_cmds, $1)="sed 's|^|_|' < \$export_symbols > \$output_objdir/\$libname-symbols.expsym~\$CC -r -keep_private_externs -nostdlib -o \$lib-master.o \$libobjs~\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$lib-master.o \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring$_lt_dar_export_syms$_lt_dsymutil"
+      _LT_TAGVAR(archive_cmds, $1)="\$CC -r -keep_private_externs -nostdlib -o \$lib-master.o \$libobjs~\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$lib-master.o \$deplibs \$compiler_flags -install_name \"\$rpath/\$soname\" \$verstring$_lt_dsymutil"
+      _LT_TAGVAR(archive_expsym_cmds, $1)="sed 's|^|_|' < \$export_symbols > \$output_objdir/\$libname-symbols.expsym~\$CC -r -keep_private_externs -nostdlib -o \$lib-master.o \$libobjs~\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$lib-master.o \$deplibs \$compiler_flags -install_name \"\$rpath/\$soname\" \$verstring$_lt_dar_export_syms$_lt_dsymutil"
     fi
 ],[])
   else
@@ -1554,19 +1554,19 @@ _LT_DECL([], [RANLIB], [1],
 
 # Determine commands to create old-style static archives.
 old_archive_cmds='$AR $AR_FLAGS $oldlib$oldobjs'
-old_postinstall_cmds='chmod 644 $oldlib'
+old_postinstall_cmds='chmod 644 "$oldlib"'
 old_postuninstall_cmds=
 
 if test -n "$RANLIB"; then
   case $host_os in
   bitrig* | openbsd*)
-    old_postinstall_cmds="$old_postinstall_cmds~\$RANLIB -t \$tool_oldlib"
+    old_postinstall_cmds="$old_postinstall_cmds~\$RANLIB -t \"\$tool_oldlib\""
     ;;
   *)
-    old_postinstall_cmds="$old_postinstall_cmds~\$RANLIB \$tool_oldlib"
+    old_postinstall_cmds="$old_postinstall_cmds~\$RANLIB \"\$tool_oldlib\""
     ;;
   esac
-  old_archive_cmds="$old_archive_cmds~\$RANLIB \$tool_oldlib"
+  old_archive_cmds="$old_archive_cmds~\$RANLIB \"\$tool_oldlib\""
 fi
 
 case $host_os in
@@ -1575,8 +1575,8 @@ case $host_os in
   *)
     lock_old_archive_extraction=no ;;
 esac
-_LT_DECL([], [old_postinstall_cmds], [2])
-_LT_DECL([], [old_postuninstall_cmds], [2])
+_LT_DECL([], [old_postinstall_cmds], [1])
+_LT_DECL([], [old_postuninstall_cmds], [1])
 _LT_TAGDECL([], [old_archive_cmds], [2],
     [Commands used to build an old-style archive])
 _LT_DECL([], [lock_old_archive_extraction], [0],
@@ -2500,7 +2500,7 @@ aix[[4-9]]*)
       library_names_spec='$libname$release.a $libname.a'
       soname_spec='$libname$release$shared_ext$major'
       # unpreferred sharedlib libNAME.so.V and symlink libNAME.so need extra handling
-      postinstall_cmds='test -z "$dlname" || $install_shared_prog $dir/$dlname $destdir/$dlname~test -z "$tstripme" || test -z "$striplib" || $striplib $destdir/$dlname~test -n "$linkname" || linkname=$realname~func_stripname "" ".a" "$linkname"~(cd "$destdir" && $LN_S -f $dlname $func_stripname_result.so)'
+      postinstall_cmds='test -z "$dlname" || $install_shared_prog "$dir/$dlname" "$destdir/$dlname"~test -z "$tstripme" || test -z "$striplib" || $striplib "$destdir/$dlname"~test -n "$linkname" || linkname="$realname"~func_stripname "" ".a" "$linkname"~(cd "$destdir" && $LN_S -f $dlname $func_stripname_result.so)'
       postuninstall_cmds='test -z "$dlname" || func_append rmfiles " $odir/$dlname"~for n in $old_library $library_names; do :; done~func_stripname "" ".a" "$n"~func_append rmfiles " $odir/$func_stripname_result.so"'
       ;;
     esac
@@ -2534,7 +2534,7 @@ bsdi[[45]]*)
   need_version=no
   library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
   soname_spec='$libname$release$shared_ext$major'
-  finish_cmds='PATH="\$PATH:/sbin" ldconfig $libdir'
+  finish_cmds='PATH="\$PATH:/sbin" ldconfig "$libdir"'
   shlibpath_var=LD_LIBRARY_PATH
   sys_lib_search_path_spec="/shlib /usr/lib /usr/X11/lib /usr/contrib/lib /lib /usr/local/lib"
   sys_lib_dlsearch_path_spec="/shlib /usr/lib /usr/local/lib"
@@ -2779,7 +2779,7 @@ hpux9* | hpux10* | hpux11*)
     ;;
   esac
   # HP-UX runs *really* slowly unless shared libraries are mode 555, ...
-  postinstall_cmds='chmod 555 $lib'
+  postinstall_cmds='chmod 555 "$lib"'
   # or fails outright, so override atomically:
   install_override_mode=555
   ;;
@@ -2865,7 +2865,7 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
   need_version=no
   library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
   soname_spec='$libname$release$shared_ext$major'
-  finish_cmds='PATH="\$PATH:/sbin" ldconfig -n $libdir'
+  finish_cmds='PATH="\$PATH:/sbin" ldconfig -n "$libdir"'
   shlibpath_var=LD_LIBRARY_PATH
   shlibpath_overrides_runpath=no
 
@@ -2915,7 +2915,7 @@ netbsd*)
   need_version=no
   if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
     library_names_spec='$libname$release$shared_ext$versuffix $libname$shared_ext$versuffix'
-    finish_cmds='PATH="\$PATH:/sbin" ldconfig -m $libdir'
+    finish_cmds='PATH="\$PATH:/sbin" ldconfig -m "$libdir"'
     dynamic_linker='NetBSD (a.out) ld.so'
   else
     library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
@@ -2956,7 +2956,7 @@ openbsd* | bitrig*)
     need_version=yes
   fi
   library_names_spec='$libname$release$shared_ext$versuffix $libname$shared_ext$versuffix'
-  finish_cmds='PATH="\$PATH:/sbin" ldconfig -m $libdir'
+  finish_cmds='PATH="\$PATH:/sbin" ldconfig -m "$libdir"'
   shlibpath_var=LD_LIBRARY_PATH
   shlibpath_overrides_runpath=yes
   ;;
@@ -3016,13 +3016,13 @@ solaris*)
   shlibpath_overrides_runpath=yes
   hardcode_into_libs=yes
   # ldd complains unless libraries are executable
-  postinstall_cmds='chmod +x $lib'
+  postinstall_cmds='chmod +x "$lib"'
   ;;
 
 sunos4*)
   version_type=sunos
   library_names_spec='$libname$release$shared_ext$versuffix $libname$shared_ext$versuffix'
-  finish_cmds='PATH="\$PATH:/usr/etc" ldconfig $libdir'
+  finish_cmds='PATH="\$PATH:/usr/etc" ldconfig "$libdir"'
   shlibpath_var=LD_LIBRARY_PATH
   shlibpath_overrides_runpath=yes
   if test yes = "$with_gnu_ld"; then
@@ -3151,11 +3151,11 @@ _LT_DECL([], [soname_spec], [1],
     [[The coded name of the library, if different from the real name]])
 _LT_DECL([], [install_override_mode], [1],
     [Permission mode override for installation of shared libraries])
-_LT_DECL([], [postinstall_cmds], [2],
+_LT_DECL([], [postinstall_cmds], [1],
     [Command to use after installation of a shared archive])
-_LT_DECL([], [postuninstall_cmds], [2],
+_LT_DECL([], [postuninstall_cmds], [1],
     [Command to use after uninstallation of a shared archive])
-_LT_DECL([], [finish_cmds], [2],
+_LT_DECL([], [finish_cmds], [1],
     [Commands used to finish a libtool library installation in a directory])
 _LT_DECL([], [finish_eval], [1],
     [[As "finish_cmds", except a single script fragment to be evaled but
@@ -5609,7 +5609,7 @@ _LT_EOF
 	_LT_TAGVAR(exclude_expsyms, $1)='_NULL_IMPORT_DESCRIPTOR|_IMPORT_DESCRIPTOR_.*'
 	_LT_TAGVAR(export_symbols_cmds, $1)='$NM $libobjs $convenience | $global_symbol_pipe | $SED -e '\''/^[[BCDGRS]][[ ]]/s/.*[[ ]]\([[^ ]]*\)/\1,DATA/'\'' | $SED -e '\''/^[[AITW]][[ ]]/s/.*[[ ]]//'\'' | sort | uniq > $export_symbols'
 	# Don't use ranlib
-	_LT_TAGVAR(old_postinstall_cmds, $1)='chmod 644 $oldlib'
+	_LT_TAGVAR(old_postinstall_cmds, $1)='chmod 644 "$oldlib"'
 	_LT_TAGVAR(postlink_cmds, $1)='lt_outputfile="@OUTPUT@"~
           lt_tool_outputfile="@TOOL_OUTPUT@"~
           case $lt_outputfile in
@@ -6274,7 +6274,7 @@ if test -n "$compiler"; then
     test yes = "$enable_shared" && enable_static=no
     if test -n "$RANLIB"; then
       archive_cmds="$archive_cmds~\$RANLIB \$lib"
-      postinstall_cmds='$RANLIB $lib'
+      postinstall_cmds='$RANLIB "$lib"'
     fi
     ;;
 
@@ -6681,7 +6681,7 @@ if test yes != "$_lt_caught_CXX_error"; then
 	  # _LT_TAGVAR(old_archive_from_new_cmds, $1)='true'
 	  _LT_TAGVAR(enable_shared_with_static_runtimes, $1)=yes
 	  # Don't use ranlib
-	  _LT_TAGVAR(old_postinstall_cmds, $1)='chmod 644 $oldlib'
+	  _LT_TAGVAR(old_postinstall_cmds, $1)='chmod 644 "$oldlib"'
 	  _LT_TAGVAR(postlink_cmds, $1)='lt_outputfile="@OUTPUT@"~
             lt_tool_outputfile="@TOOL_OUTPUT@"~
             case $lt_outputfile in
@@ -7762,7 +7762,7 @@ if test yes != "$_lt_disable_F77"; then
         test yes = "$enable_shared" && enable_static=no
         if test -n "$RANLIB"; then
           archive_cmds="$archive_cmds~\$RANLIB \$lib"
-          postinstall_cmds='$RANLIB $lib'
+          postinstall_cmds='$RANLIB "$lib"'
         fi
         ;;
       aix[[4-9]]*)
@@ -7900,7 +7900,7 @@ if test yes != "$_lt_disable_FC"; then
         test yes = "$enable_shared" && enable_static=no
         if test -n "$RANLIB"; then
           archive_cmds="$archive_cmds~\$RANLIB \$lib"
-          postinstall_cmds='$RANLIB $lib'
+          postinstall_cmds='$RANLIB "$lib"'
         fi
         ;;
       aix[[4-9]]*)
