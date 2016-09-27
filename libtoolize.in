@@ -398,7 +398,7 @@ func_copy ()
       then
         func_notquiet_once "$my_msg_var"
         if $opt_verbose; then
-          func_notquiet "$SED -e '$my_filter' $my_srcfile > $my_destfile"
+          func_notquiet "$SED -e '$my_filter' '$my_srcfile' > '$my_destfile'"
          else
           func_notquiet "creating file '$my_destfile'"
          fi
@@ -433,12 +433,14 @@ func_copy ()
 
 # func_included_files SEARCHFILE
 # ------------------------------
-# Output INCLUDEFILE if SEARCHFILE m4_includes it, else output SEARCHFILE.
+# Set func_included_files_result to SEARCHFILE (if it exists) and all
+# files included in SEARCHFILE via m4_includes, separated by $PATH_SEPARATOR
 func_included_files ()
 {
     $debug_cmd
 
     my_searchfile=$1
+    my_included_recurse=$2
 
     my_include_regex=
     my_sed_include='
@@ -448,13 +450,21 @@ func_included_files ()
 	}
         d'
 
+    if test -z "$my_included_recurse"; then
+      func_included_files_result=
+    fi
+
     if test -f "$my_searchfile"; then
-      $ECHO "$my_searchfile"
+      if test -n "$func_included_files_result"; then
+        func_included_files_result="${func_included_files_result}${PATH_SEPARATOR-:}$my_searchfile"
+      else
+        func_included_files_result="$my_searchfile"
+      fi
 
       # Only recurse when we don't care if all the variables we use get
       # trashed, since they are in global scope.
       for my_filename in `$SED "$my_sed_include" "$my_searchfile"`; do
-	func_included_files $my_filename
+	func_included_files $my_filename 1
       done
     fi
 }
@@ -482,7 +492,11 @@ func_serial ()
     my_serial=
     func_dirname_and_basename "$my_filename"
     my_filebase=$func_basename_result
-    for my_file in `func_included_files "$my_filename"`; do
+    func_included_files "$my_filename"
+    my_orig_IFS=$IFS
+    IFS=${PATH_SEPARATOR-:}
+    for my_file in $func_included_files_result; do
+      IFS=$my_orig_IFS
       if test -z "$my_macro_regex" ||
          test aclocal.m4 = "$my_filename" ||
          test "X$my_macro_regex" = "X$my_filebase" ||
@@ -492,6 +506,7 @@ func_serial ()
 	break
       fi
     done
+    IFS=$my_orig_IFS
 
     # If the file has no serial number, we assume it's ancient.
     test -n "$my_serial" || my_serial=0
@@ -685,11 +700,12 @@ func_serial_update ()
     # Do this after the copy for hand maintained 'aclocal.m4', incase
     # it has 'm4_include([DESTFILE])', so the copy effectively already
     # updated 'aclocal.m4'.
-    my_included_files=`func_included_files aclocal.m4`
-    case `echo " "$my_included_files" "` in
+    func_included_files aclocal.m4
+    my_sep=${PATH_SEPARATOR-:}
+    case `echo ${my_sep}${my_included_files_result}$my_sep` in
 
       # Skip included files:
-      *" $my_destfile "*) ;;
+      *${my_sep}${my_destfile}${my_sep}*) ;;
 
       # Otherwise compare to aclocal.m4 serial number (func_serial
       # returns 0 for older macro serial numbers before we provided
@@ -1076,7 +1092,7 @@ func_nonemptydir_p ()
       || func_fatal_error "\$$my_dirvar is not a directory: '$my_dir'"
 
     # check that the directories contents can be ls'ed
-    test -n "`{ cd $my_dir && ls; } 2>/dev/null`" \
+    test -n "`{ cd "$my_dir" && ls; } 2>/dev/null`" \
         || func_fatal_error "cannot list files: '$my_dir'"
 }
 
